@@ -865,9 +865,8 @@ struct PythonPrintImpl {
     auto checkSubvalue = [&hasNonASCII](const IValue& val) {
       if (val.isString()) {
         const auto maxASCII = 0x7fu;
-        for (auto& c : val.toStringRef()) {
-          // NOLINTNEXTLINE(clang-diagnostic-sign-compare)
-          if (c > maxASCII) {
+        for (auto c : val.toStringRef()) {
+          if (static_cast<decltype(maxASCII)>(c) > maxASCII) {
             hasNonASCII = true;
             return true;
           }

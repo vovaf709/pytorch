@@ -103,6 +103,7 @@ else()
     list(APPEND TORCH_PYTHON_COMPILE_OPTIONS
       -fno-strict-aliasing
       -Wno-write-strings
+      -Wno-writable-strings
       -Wno-strict-aliasing)
 endif()
 

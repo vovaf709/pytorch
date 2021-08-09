@@ -317,7 +317,7 @@ class TORCH_API StaticRuntime {
 /// List/Tuple/Dict of Tensors. Complex output types such as List of Lists are
 /// not supported.
 
-class MemoryPlanner {
+class TORCH_API MemoryPlanner {
  public:
   explicit MemoryPlanner(
       StaticRuntime* runtime,
@@ -341,6 +341,9 @@ class MemoryPlanner {
     return reused_tensors_;
   }
 
+  static size_t compute_aligned_tensor_size(size_t nbytes);
+  static at::DataPtr allocate_buffer(size_t size, at::DeviceType deviceType = at::kCPU);
+
  private:
   // ivalues created in one run but not managed by MemoryPlanner
   std::vector<IValue*> unmanaged_ivalues_;
@@ -361,8 +364,6 @@ class MemoryPlanner {
   // size_t reused_output_tensors_{0};
   // at::DataPtr output_buffer_; // allocated each time we call Run()
 
-  static size_t compute_aligned_tensor_size(size_t nbytes);
-  static at::DataPtr allocate_buffer(size_t size);
 };
 
 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init)
@@ -419,6 +420,19 @@ class TORCH_API ProcessedNode {
   std::vector<const IValue*> inputs_; // unowned
   std::vector<IValue> outputs_;
 };
+
+//  Map each value to all values that are alive at the same time.
+using LivenessMap = std::unordered_map<const Value*, std::set<const Value*>>;
+using LiveRanges = std::unordered_map<const Value*, std::pair<size_t, size_t>>;
+
+TORCH_API std::unordered_set<const Value*> GetAlwaysAliveValues(
+    const std::shared_ptr<torch::jit::Graph>& graph,
+    AliasDb& db);
+
+TORCH_API std::pair<LivenessMap, LiveRanges> GetLiveness(
+    const std::shared_ptr<torch::jit::Graph>& graph,
+    const std::unordered_set<const Value*>& always_alive,
+    AliasDb& db);
 
 } // namespace jit
 } // namespace torch
